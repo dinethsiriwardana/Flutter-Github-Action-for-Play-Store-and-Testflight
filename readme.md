@@ -20,6 +20,11 @@ curl -sL https://raw.githubusercontent.com/dinethsiriwardana/Unified-Flutter-CI-
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dinethsiriwardana/Unified-Flutter-CI-CD-Release-Pipeline/master/.github/scripts/install.bat" -OutFile "install.bat"; .\install.bat; Remove-Item "install.bat"
 ```
 
+### Windows (Command Prompt)
+```cmd
+curl -sL https://raw.githubusercontent.com/dinethsiriwardana/Unified-Flutter-CI-CD-Release-Pipeline/master/.github/scripts/install.bat -o install.bat && install.bat && del install.bat
+```
+
 This will automatically download and extract all the required workflows, composite actions, and local helper scripts.
 
 ### ⚙️ Post-Installation Setup
