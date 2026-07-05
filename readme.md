@@ -311,13 +311,12 @@ To distribute Android builds, set up connections for Google Play Store and Fireb
 
 | File / Directory | Description |
 |---|---|
-| [`release.yml`](./release.yml) | The main CI/CD workflow orchestrator |
-| [`job_*.yml`](./) | Reusable workflows for each platform/task |
-| [`../actions/setup-flutter-env/action.yml`](../actions/setup-flutter-env/action.yml) | Flutter setup composite action |
-| [`../actions/bump-version/action.yml`](../actions/bump-version/action.yml) | Version bump composite action |
-| [`scripts/precheck_github_config.sh`](./scripts/precheck_github_config.sh) | GitHub variables & secrets validator |
-| [`scripts/setup_github_variables.sh`](./scripts/setup_github_variables.sh) | Interactive GitHub variables config tool |
-| [`../../pubspec.yaml`](../../pubspec.yaml) | Flutter project dependencies |
+| [`release.yml`](.github/workflows/release.yml) | The main CI/CD workflow orchestrator |
+| [`job_*.yml`](.github/workflows/) | Reusable workflows for each platform/task |
+| [`setup-flutter-env/action.yml`](.github/actions/setup-flutter-env/action.yml) | Flutter setup composite action |
+| [`bump-version/action.yml`](.github/actions/bump-version/action.yml) | Version bump composite action |
+| [`scripts/precheck_github_config.sh`](scripts/precheck_github_config.sh) | GitHub variables & secrets validator |
+| [`scripts/setup_github_variables.sh`](scripts/setup_github_variables.sh) | Interactive GitHub variables config tool |
 
 ---
 
@@ -385,3 +384,35 @@ If you only need a single release build:
 2. OR manually delete the `Build APK (Dev)` step in `job_build_android.yml` and the `Build iOS IPA (Dev)` step in `job_build_ios.yml`.
 3. If you remove the Dev builds, update `job_release.yml` so it only expects and zips the production build artifacts.
 </details>
+
+---
+
+## 🔗 Reusing Workflows in Other Repositories
+
+Because these workflows are designed as modular, reusable workflows, other developers can directly reference and call them from their own repositories without duplicating the workflow logic.
+
+### 1. Repository Access Configuration
+Ensure your repository's access settings allow others to read the workflows:
+* Go to **Settings > Actions > General**.
+* Under **Access**, select **"Accessible from repositories in this organization"** (for private/internal organization sharing) or ensure the repository is set to **Public** for global sharing.
+
+### 2. Referencing a Reusable Job
+Other developers can invoke individual jobs from this repository directly in their own `.github/workflows/` files. For example, to call the setup or build jobs:
+
+```yaml
+jobs:
+  setup:
+    uses: dinethsiriwardana/Flutter-Build---Release-Pipeline/.github/workflows/job_setup.yml@master
+    secrets: inherit
+
+  build-android:
+    needs: setup
+    uses: dinethsiriwardana/Flutter-Build---Release-Pipeline/.github/workflows/job_build_android.yml@master
+    with:
+      build_number: ${{ needs.setup.outputs.build_number }}
+      version_name: ${{ needs.setup.outputs.version_name }}
+    secrets: inherit
+```
+
+*You can replace `@master` with a specific commit SHA or release tag (e.g., `@v1.0.0`) to pin versions.*
+
