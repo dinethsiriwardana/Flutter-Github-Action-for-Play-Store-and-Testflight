@@ -214,44 +214,45 @@ Since GitHub Action runners start fresh every time, Apple certificates and provi
 #### Option A: Full CLI Flow (Recommended if cert doesn't exist locally)
 1. **Generate a CSR and private key on your Mac:**
    ```bash
+   mkdir -p ios_certs
    openssl req -nodes -newkey rsa:2048 \
-     -keyout ~/Downloads/distribution.key \
-     -out ~/Downloads/distribution.csr \
+     -keyout ios_certs/distribution.key \
+     -out ios_certs/distribution.csr \
      -subj "/emailAddress=YOUR@EMAIL.com/CN=App Distribution/C=US"
    ```
 2. **Upload the CSR to Apple Developer Portal:**
    - Go to [developer.apple.com/account/resources/certificates/list](https://developer.apple.com/account/resources/certificates/list).
    - If the `+` button says **"Maximum number of certificates generated"**, revoke one of the existing API Key Distribution certs.
    - Click `+` → select **Apple Distribution** → **Continue**.
-   - Upload `~/Downloads/distribution.csr` → **Continue** → **Download**.
-   - Save the downloaded `.cer` file to `~/Downloads/distribution.cer`.
+   - Upload `ios_certs/distribution.csr` → **Continue** → **Download**.
+   - Save the downloaded `.cer` file to `ios_certs/distribution.cer`.
 3. **Convert the `.cer` + `.key` into a `.p12` bundle:**
    ```bash
    # Convert cert to PEM
-   openssl x509 -in ~/Downloads/distribution.cer -inform DER \
-     -out ~/Downloads/distribution.pem -outform PEM
+   openssl x509 -in ios_certs/distribution.cer -inform DER \
+     -out ios_certs/distribution.pem -outform PEM
 
    # Bundle PEM and private key (choose a secure password)
    openssl pkcs12 -export \
-     -out ~/Downloads/distribution.p12 \
-     -inkey ~/Downloads/distribution.key \
-     -in ~/Downloads/distribution.pem \
+     -out ios_certs/distribution.p12 \
+     -inkey ios_certs/distribution.key \
+     -in ios_certs/distribution.pem \
      -name "Apple Distribution" \
      -passout pass:YOUR_CHOSEN_PASSWORD
    ```
 4. **Base64 encode the `.p12` to copy to clipboard:**
    ```bash
-   base64 -i ~/Downloads/distribution.p12 | pbcopy
+   base64 -i ios_certs/distribution.p12 | pbcopy
    ```
    - Clipboard content becomes **`BUILD_CERTIFICATE_BASE64`**.
    - The password you chose becomes **`P12_PASSWORD`**.
 
 #### Option B: Keychain Export (If cert already exists on your Mac)
 1. Open **Keychain Access** → **My Certificates**.
-2. Right-click **"Apple Distribution: [Your Name/Company]"** (must have a private key arrow ▶) → **Export** → save as `distribution.p12` → set a password.
+2. Right-click **"Apple Distribution: [Your Name/Company]"** (must have a private key arrow ▶) → **Export** → save as `distribution.p12` in a folder like `ios_certs` in your project root → set a password.
 3. Base64 encode and copy the file:
    ```bash
-   base64 -i ~/Downloads/distribution.p12 | pbcopy
+   base64 -i ios_certs/distribution.p12 | pbcopy
    ```
    - Clipboard content becomes **`BUILD_CERTIFICATE_BASE64`**.
    - The password you set during export becomes **`P12_PASSWORD`**.
@@ -263,10 +264,10 @@ Since GitHub Action runners start fresh every time, Apple certificates and provi
 1. Go to the [Apple Developer Account](https://developer.apple.com/account/) → **Certificates, Identifiers & Profiles** → **Profiles**.
 2. Find the **App Store** (Distribution) profile for your App ID.
    > [!IMPORTANT]
-   > Ensure the profile is linked to the **correct, active Distribution Certificate** generated in Step 1. If you created a new certificate, edit the profile, check the new certificate, save, and download.
+   > Ensure the profile is linked to the **correct, active Distribution Certificate** generated in Step 1. If you created a new certificate, edit the profile, check the new certificate, save, and download it to the `ios_certs` folder.
 3. Base64 encode the `.mobileprovision` file:
    ```bash
-   base64 -i ~/Desktop/YourProfile.mobileprovision -o ~/Desktop/Profile_Base64.txt
+   base64 -i ios_certs/YourProfile.mobileprovision -o ios_certs/Profile_Base64.txt
    ```
 4. Copy the entire contents of `Profile_Base64.txt` and set it as the GitHub Secret: **`BUILD_PROVISION_PROFILE_BASE64`**.
 </details>
@@ -373,9 +374,9 @@ If your application uses App Extensions (e.g., Live Activities, widgets), you mu
 <summary><b>🛠️ Step-by-Step Setup for Live Activities</b></summary>
 
 1. **Create the Provisioning Profile:** Go to your Apple Developer Account and create an App Store Distribution profile for the extension's specific Bundle ID (e.g., `com.company.app.live-activities`).
-2. **Export as Base64:** Download the `.mobileprovision` profile and run:
+2. **Export as Base64:** Download the `.mobileprovision` profile to the `ios_certs` folder and run:
    ```bash
-   base64 -i ~/Downloads/YourExtensionProfile.mobileprovision | pbcopy
+   base64 -i ios_certs/YourExtensionProfile.mobileprovision | pbcopy
    ```
 3. **Add GitHub Secret:** Create a repository secret named `BUILD_PROVISION_PROFILE_LIVE_BASE64` and paste the value.
 4. **Add GitHub Variable:** Create a repository variable named `IOS_LIVE_PROFILE` with the name of the profile.
